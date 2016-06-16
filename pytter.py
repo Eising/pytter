@@ -5,32 +5,34 @@ Written by Allan Eising <eising@nordu.net>
 See README file for more info
 
 """
+from IPy import IP
+import re
+import time
+
 
 __version__ = '0.1'
 
-from IPy import IP
-import re, time
 
 class Pytter(object):
     rdns = dict()
-    serialnumber = time.strftime("%Y%m%d00") # Initialize a default serial
+    serialnumber = time.strftime("%Y%m%d00")    # Initialize a default serial
     config = {
-            'default_ttl' : 86400, # TTL to set as $TTL
-            'primary_server' : None, # The hostname for the primary DNS server
-            'email' : None, # The email address in DNS style
-            'refresh' : 14400, # Time to Refresh
-            'retry' : 1800, # Time to Retry
-            'expire' : 1209600, # Time to Expire
-            'minimum_ttl' : 3600, # Minimum Time to Live
-            'soa_ttl' : 1800, # The TTL of the SOA record
-            'nameservers' : [], # Additional NS records
-            'aggregate_v4' : 24, # The zone size to aggregate to for IPv4
-            'aggregate_v6' : 48 # The zone size to aggregate to for IPv6
+            'default_ttl': 86400,    # TTL to set as $TTL
+            'primary_server': None,  # The hostname for the primary DNS server
+            'email': None,           # The email address in DNS style
+            'refresh': 14400,        # Time to Refresh
+            'retry': 1800,           # Time to Retry
+            'expire': 1209600,       # Time to Expire
+            'minimum_ttl': 3600,     # Minimum Time to Live
+            'soa_ttl': 1800,         # The TTL of the SOA record
+            'nameservers': [],       # Additional NS records
+            'aggregate_v4': 24,      # The zone size to aggregate to for IPv4
+            'aggregate_v6': 48       # The zone size to aggregate to for IPv6
     }
 
     def __init__(self, inconfig):
         # Required arguments: primary_server and email
-        if not all (k in inconfig for k in ("primary_server", "email")):
+        if not all(k in inconfig for k in ("primary_server", "email")):
             raise ValueError("Must at least set primary_server and email")
 
         tmpconf = self.config.copy()
@@ -39,15 +41,13 @@ class Pytter(object):
         self.config['nameservers'].append(self.config['primary_server'])
         # TODO: Ensure all servers end with a period
 
-
     def add_ip(self, address, dtype, dvalue):
         ip = IP(address)
-        
         reverse_name = self.get_zone_name(address)
 
-        if(not self.rdns.has_key(reverse_name)):
+        if(reverse_name not in self.rdns):
             self.rdns[reverse_name] = dict()
-        if(not self.rdns[reverse_name].has_key(ip)):
+        if(ip not in self.rdns[reverse_name]):
             self.rdns[reverse_name][ip] = dict()
         self.rdns[reverse_name][ip][dtype] = dvalue
 
@@ -59,9 +59,11 @@ class Pytter(object):
         v4size = self.config['aggregate_v4']
         v6size = self.config['aggregate_v6']
         if (ip.version() == 4):
-            reverse_name = re.sub(r'\.$', '', ip.make_net(v4size).reverseName())
+            reverse_name = re.sub(
+                    r'\.$', '', ip.make_net(v4size).reverseName())
         elif (ip.version() == 6):
-            reverse_name = re.sub(r'\.$', '', ip.make_net(v6size).reverseName())
+            reverse_name = re.sub(
+                    r'\.$', '', ip.make_net(v6size).reverseName())
         return reverse_name
 
     def dump_zone(self, fqdn):
@@ -83,39 +85,31 @@ class Pytter(object):
             for fqdn in self.rdns.iterkeys():
                 print self.dump_zone(fqdn)
 
-
-
-
-
     # Private methods
     def __generate_zone_header(self):
         serialnumber = self.serialnumber
         conf = self.config.copy()
         headers = "$TTL {}\n".format(conf['default_ttl'])
-        headers += "@ {:<5} {:<8} {:<8} {:<8} {:<8} (\n".format(conf['soa_ttl'], "IN", "SOA", conf['primary_server'], conf['email'])
+        headers += "@ {:<5} {:<8} {:<8} {:<8} {:<8} (\n".format(
+                conf['soa_ttl'], "IN", "SOA",
+                conf['primary_server'], conf['email'])
         headers += "{:>42} ; {}\n".format(serialnumber, "Serial number")
         headers += "{:>42} ; {}\n".format(conf['refresh'], "Refresh")
         headers += "{:>42} ; {}\n".format(conf['retry'], "Retry")
         headers += "{:>42} ; {}\n".format(conf['expire'], "Expire")
-        headers += "{:>42} {}; {}\n".format(conf['minimum_ttl'], ")", "Minimum TTL")
+        headers += "{:>42} {}; {}\n".format(
+                conf['minimum_ttl'], ")", "Minimum TTL")
         for ns in conf['nameservers']:
-            headers += "{:<2}{:<5} {:<8} {:<8} {:<8}\n".format("", "", "", "NS", ns)
+            headers += "{:<2}{:<5} {:<8} {:<8} {:<8}\n".format(
+                    "", "", "", "NS", ns)
 
         return headers
 
     def __generate_record(self, ip, dtype, dvalue):
         if (ip.version() == 4):
-            record = "{:<29}{:<8}{:<8}{}\n".format(ip.reverseName(), "", dtype, dvalue)
+            record = "{:<29}{:<8}{:<8}{}\n".format(
+                    ip.reverseName(), "", dtype, dvalue)
         elif (ip.version() == 6):
-            record = "{:<73}{:<8}{:<8}{}\n".format(ip.reverseName(), "", dtype, dvalue)
+            record = "{:<73}{:<8}{:<8}{}\n".format(
+                    ip.reverseName(), "", dtype, dvalue)
         return record
-
-
-
-
-
-
-
-
-
-
