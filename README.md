@@ -79,14 +79,14 @@ rd.aggregate_v6 = 32
 
 You would normally have a backup NS, and that can be defined as such:
 
-```
+```python
 import pytter
 
 rd = pytter.Pytter('primary.dns.server.', 'hostmaster.dns.server.',
 'backup.dns.server')
 ```
 Or if multiple:
-```
+```python
 import pytter
 
 alt_dns_servers = ['ns2.mynet.com', 'ns3.mynet.com']
