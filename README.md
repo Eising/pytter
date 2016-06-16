@@ -32,16 +32,20 @@ The config dict has the following options and defaults:
 
 ```python
 config = {
-        'default_ttl' : 86400,
-        'primary_server' : None,
-        'email' : None,
-        'refresh' : 14400,
-        'retry' : 1800,
-        'expire' : 1209600,
-        'minimum_ttl' : 3600,
-        'soa_ttl' : 1800,
-        'nameservers' : []
+        'default_ttl' : 86400, # TTL to set as $TTL
+        'primary_server' : None, # The hostname for the primary DNS server
+        'email' : None, # The email address in DNS style
+        'refresh' : 14400, # Time to Refresh
+        'retry' : 1800, # Time to Retry
+        'expire' : 1209600, # Time to Expire
+        'minimum_ttl' : 3600, # Minimum Time to Live
+        'soa_ttl' : 1800, # The TTL of the SOA record
+        'nameservers' : [], # Additional NS records
+        'aggregate_v4' : 24, # The zone size to aggregate to for IPv4
+        'aggregate_v6' : 48 # The zone size to aggregate to for IPv6
 }
+
+
 ```
 
 ## Setting the Serial
@@ -57,3 +61,15 @@ rd.serialnumber = time.strftime("%Y%m%d01")
 
 ```
 
+## Zone aggregation
+
+Normally zones are considered to follow a /24 boundary for IPv4 and /48 for
+IPv6. You may want to change this for IPv6, if you are generating reverse for,
+say a /32 or larger. Set the `config['aggregate_v6']` for this.
+
+## Contact and disclaimer
+
+This library is not meant for serious work. If it's working for you, fine, but
+I make no guarantees.
+
+If you want to reach out to me, you can do so at eising (at) nordu.net

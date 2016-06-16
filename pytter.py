@@ -15,15 +15,17 @@ class Pytter(object):
     rdns = dict()
     serialnumber = time.strftime("%Y%m%d00") # Initialize a default serial
     config = {
-            'default_ttl' : 86400,
-            'primary_server' : None,
-            'email' : None,
-            'refresh' : 14400,
-            'retry' : 1800,
-            'expire' : 1209600,
-            'minimum_ttl' : 3600,
-            'soa_ttl' : 1800,
-            'nameservers' : []
+            'default_ttl' : 86400, # TTL to set as $TTL
+            'primary_server' : None, # The hostname for the primary DNS server
+            'email' : None, # The email address in DNS style
+            'refresh' : 14400, # Time to Refresh
+            'retry' : 1800, # Time to Retry
+            'expire' : 1209600, # Time to Expire
+            'minimum_ttl' : 3600, # Minimum Time to Live
+            'soa_ttl' : 1800, # The TTL of the SOA record
+            'nameservers' : [], # Additional NS records
+            'aggregate_v4' : 24, # The zone size to aggregate to for IPv4
+            'aggregate_v6' : 48 # The zone size to aggregate to for IPv6
     }
 
     def __init__(self, inconfig):
@@ -54,10 +56,12 @@ class Pytter(object):
 
     def get_zone_name(self, address):
         ip = IP(address)
+        v4size = self.config['aggregate_v4']
+        v6size = self.config['aggregate_v6']
         if (ip.version() == 4):
-            reverse_name = re.sub(r'\.$', '', ip.make_net('24').reverseName())
+            reverse_name = re.sub(r'\.$', '', ip.make_net(v4size).reverseName())
         elif (ip.version() == 6):
-            reverse_name = re.sub(r'\.$', '', ip.make_net('48').reverseName())
+            reverse_name = re.sub(r'\.$', '', ip.make_net(v6size).reverseName())
         return reverse_name
 
     def dump_zone(self, fqdn):
