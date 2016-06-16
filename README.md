@@ -31,10 +31,10 @@ whether it's IPv4 or IPv6
 The Pytter object is constructed as such:
 
 ```python
-    def __init__(self, primary_server, email, nameservers=[], 
-            default_ttl=86400, refresh=14400, retry=1800, expire=1209600,
-            minimum_ttl=3600, soa_ttl=1800, aggregate_v4=24, aggregate_v6=48):
-
+    def __init__(self, primary_server, email, nameservers=[],
+                 default_ttl=86400, refresh=14400, retry=1800, expire=1209600,
+                 minimum_ttl=3600, soa_ttl=1800, aggregate_v4=24,
+                 aggregate_v6=48):
 ```
 
 These arguments are defined like this:
