@@ -13,7 +13,7 @@ import pytter
 
 config = {'primary_server' : 'my.dns.server.', 'email' : 'hostmaster.my.dns.'}
 
-rd = pytter.Pytter(primary_server='my.dns.server.' email='hostmaster.my.dns.')
+rd = pytter.Pytter(primary_server='my.dns.server.', email='hostmaster.my.dns.')
 
 rd.add_reverse("10.0.0.1", "1.my.domain.name.")
 rd.add_reverse("10.1.0.3", "3.my.domain.name.")
