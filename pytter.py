@@ -10,17 +10,18 @@ import re
 import time
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 
 
 class Pytter(object):
     rdns = dict()
     serialnumber = time.strftime("%Y%m%d00")    # Initialize a default serial
+    aggregate_v4 = 24
+    aggregate_v6 = 48
 
     def __init__(self, primary_server, email, nameservers=[],
                  default_ttl=86400, refresh=14400, retry=1800, expire=1209600,
-                 minimum_ttl=3600, soa_ttl=1800, aggregate_v4=24,
-                 aggregate_v6=48):
+                 minimum_ttl=3600, soa_ttl=1800):
 
         # Validate arguments:
         # Ensure trailing dot to primary_server and email
@@ -37,11 +38,17 @@ class Pytter(object):
 
         # Iterate over nameservers to ensure this too
         self._nameservers = [self._primary_server]
-        for ns in nameservers:
-            if (ns.endswith(".")):
-                self._nameservers.append(ns)
+        if (isinstance(nameservers, list)):
+            for ns in nameservers:
+                if (ns.endswith(".")):
+                    self._nameservers.append(ns)
+                else:
+                    self._nameservers.append("{}.".format(ns))
+        else:
+            if (nameservers.endswith(".")):
+                self._nameservers.append(nameservers)
             else:
-                self._nameservers.append("{}.".format(ns))
+                self._nameservers.append("{}.".format(nameservers))
 
         # Do basic validation on remaining arguments
         # default_ttl
@@ -79,18 +86,6 @@ class Pytter(object):
         else:
             raise ValueError("soa_ttl must be a number")
 
-        # aggregte_v4
-        if (aggregate_v4 in range(0, 32)):
-            self._aggregate_v4 = aggregate_v4
-        else:
-            raise ValueError("aggregate_v4 must be a number between 0 and 32")
-
-        # aggregate_v6
-        if (aggregate_v6 in range(0, 128)):
-            self._aggregate_v6 = aggregate_v6
-        else:
-            raise ValueError("aggregate_v6 must be a number between 0 and 128")
-
     def add_ip(self, address, dtype, dvalue):
         ip = IP(address)
         reverse_name = self.get_zone_name(address)
@@ -106,8 +101,8 @@ class Pytter(object):
 
     def get_zone_name(self, address):
         ip = IP(address)
-        v4size = self._aggregate_v4
-        v6size = self._aggregate_v6
+        v4size = self.aggregate_v4
+        v6size = self.aggregate_v6
         if (ip.version() == 4):
             reverse_name = re.sub(
                     r'\.$', '', ip.make_net(v4size).reverseName())

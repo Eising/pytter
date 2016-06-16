@@ -11,9 +11,7 @@ source, and want to export reverse zones from that.
 ```python
 import pytter
 
-config = {'primary_server' : 'my.dns.server.', 'email' : 'hostmaster.my.dns.'}
-
-rd = pytter.Pytter(primary_server='my.dns.server.', email='hostmaster.my.dns.')
+rd = pytter.Pytter('my.dns.server.', 'hostmaster.my.dns.')
 
 rd.add_reverse("10.0.0.1", "1.my.domain.name.")
 rd.add_reverse("10.1.0.3", "3.my.domain.name.")
@@ -34,8 +32,7 @@ The Pytter object is constructed as such:
 ```python
     def __init__(self, primary_server, email, nameservers=[],
                  default_ttl=86400, refresh=14400, retry=1800, expire=1209600,
-                 minimum_ttl=3600, soa_ttl=1800, aggregate_v4=24,
-                 aggregate_v6=48):
+                 minimum_ttl=3600, soa_ttl=1800)
 ```
 
 These arguments are defined like this:
@@ -50,8 +47,6 @@ These arguments are defined like this:
 'minimum_ttl' : 3600, # Minimum Time to Live
 'soa_ttl' : 1800, # The TTL of the SOA record
 'nameservers' : [], # Additional NS records
-'aggregate_v4' : 24, # The zone size to aggregate to for IPv4
-'aggregate_v6' : 48 # The zone size to aggregate to for IPv6
 ```
 
 ## Setting the Serial
@@ -71,9 +66,34 @@ rd.serialnumber = time.strftime("%Y%m%d01")
 
 Normally zones are considered to follow a /24 boundary for IPv4 and /48 for
 IPv6. You may want to change this for IPv6, if you are generating reverse for,
-say a /32 or larger. Set the `aggregate_v6` option for this (or `aggregate_v4`
-for IPv4).
+say a /32 or larger. Set the `aggregate_v6` value for this (or
+`aggregate_v4` for IPv4).
 
+```python
+rd = pytter.Pytter(config)
+
+rd.aggregate_v6 = 32
+```
+
+## Additional nameservers
+
+You would normally have a backup NS, and that can be defined as such:
+
+```
+import pytter
+
+rd = pytter.Pytter('primary.dns.server.', 'hostmaster.dns.server.',
+'backup.dns.server')
+```
+Or if multiple:
+```
+import pytter
+
+alt_dns_servers = ['ns2.mynet.com', 'ns3.mynet.com']
+
+rd = pytter.Pytter('primary.dns.server.', 'hostmaster.dns.server.',
+alt_dns_servers)
+```
 # Example zone output
 
 The zone generated will look something like this:
