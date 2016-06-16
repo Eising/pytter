@@ -10,7 +10,7 @@ import re
 import time
 
 
-__version__ = '0.3'
+__version__ = '1.0'
 
 
 class Pytter(object):
