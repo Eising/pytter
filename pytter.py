@@ -13,6 +13,7 @@ import re, time
 
 class Pytter(object):
     rdns = dict()
+    serialnumber = time.strftime("%Y%m%d00") # Initialize a default serial
     config = {
             'default_ttl' : 86400,
             'primary_server' : None,
@@ -84,8 +85,7 @@ class Pytter(object):
 
     # Private methods
     def __generate_zone_header(self):
-
-        serialnumber = time.strftime("%Y%m%d00") # You have to manage your own serial numbers
+        serialnumber = self.serialnumber
         conf = self.config.copy()
         headers = "$TTL {}\n".format(conf['default_ttl'])
         headers += "@ {:<5} {:<8} {:<8} {:<8} {:<8} (\n".format(conf['soa_ttl'], "IN", "SOA", conf['primary_server'], conf['email'])
