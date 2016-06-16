@@ -10,36 +10,86 @@ import re
 import time
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 
 
 class Pytter(object):
     rdns = dict()
     serialnumber = time.strftime("%Y%m%d00")    # Initialize a default serial
-    config = {
-            'default_ttl': 86400,    # TTL to set as $TTL
-            'primary_server': None,  # The hostname for the primary DNS server
-            'email': None,           # The email address in DNS style
-            'refresh': 14400,        # Time to Refresh
-            'retry': 1800,           # Time to Retry
-            'expire': 1209600,       # Time to Expire
-            'minimum_ttl': 3600,     # Minimum Time to Live
-            'soa_ttl': 1800,         # The TTL of the SOA record
-            'nameservers': [],       # Additional NS records
-            'aggregate_v4': 24,      # The zone size to aggregate to for IPv4
-            'aggregate_v6': 48       # The zone size to aggregate to for IPv6
-    }
 
-    def __init__(self, inconfig):
-        # Required arguments: primary_server and email
-        if not all(k in inconfig for k in ("primary_server", "email")):
-            raise ValueError("Must at least set primary_server and email")
+    def __init__(self, primary_server, email, nameservers=[],
+                 default_ttl=86400, refresh=14400, retry=1800, expire=1209600,
+                 minimum_ttl=3600, soa_ttl=1800, aggregate_v4=24,
+                 aggregate_v6=48):
 
-        tmpconf = self.config.copy()
-        tmpconf.update(inconfig)
-        self.config = tmpconf
-        self.config['nameservers'].append(self.config['primary_server'])
-        # TODO: Ensure all servers end with a period
+        # Validate arguments:
+        # Ensure trailing dot to primary_server and email
+        if (primary_server.endswith(".")):
+            self._primary_server = primary_server
+        else:
+            self._primary_server = "{}.".format(primary_server)
+
+        # Email
+        if (email.endswith(".")):
+            self._email = email
+        else:
+            self._email = "{}.".format(email)
+
+        # Iterate over nameservers to ensure this too
+        self._nameservers = [self._primary_server]
+        for ns in nameservers:
+            if (ns.endswith(".")):
+                self._nameservers.append(ns)
+            else:
+                self._nameservers.append("{}.".format(ns))
+
+        # Do basic validation on remaining arguments
+        # default_ttl
+        if (isinstance(default_ttl, (int, long))):
+            self._default_ttl = default_ttl
+        else:
+            raise ValueError("default_ttl must be a number")
+        # refresh
+        if (isinstance(refresh, (int, long))):
+            self._refresh = refresh
+        else:
+            raise ValueError("refresh must be a number")
+
+        # retry
+        if (isinstance(retry, (int, long))):
+            self._retry = retry
+        else:
+            raise ValueError("retry must be a number")
+
+        # expire
+        if (isinstance(expire, (int, long))):
+            self._expire = expire
+        else:
+            raise ValueError("expire must be a number")
+
+        # minimum_ttl
+        if (isinstance(minimum_ttl, (int, long))):
+            self._minimum_ttl = minimum_ttl
+        else:
+            raise ValueError("minimum_ttl must be a number")
+
+        # soa_ttl
+        if (isinstance(soa_ttl, (int, long))):
+            self._soa_ttl = soa_ttl
+        else:
+            raise ValueError("soa_ttl must be a number")
+
+        # aggregte_v4
+        if (aggregate_v4 in range(0, 32)):
+            self._aggregate_v4 = aggregate_v4
+        else:
+            raise ValueError("aggregate_v4 must be a number between 0 and 32")
+
+        # aggregate_v6
+        if (aggregate_v6 in range(0, 128)):
+            self._aggregate_v6 = aggregate_v6
+        else:
+            raise ValueError("aggregate_v6 must be a number between 0 and 128")
 
     def add_ip(self, address, dtype, dvalue):
         ip = IP(address)
@@ -56,8 +106,8 @@ class Pytter(object):
 
     def get_zone_name(self, address):
         ip = IP(address)
-        v4size = self.config['aggregate_v4']
-        v6size = self.config['aggregate_v6']
+        v4size = self._aggregate_v4
+        v6size = self._aggregate_v6
         if (ip.version() == 4):
             reverse_name = re.sub(
                     r'\.$', '', ip.make_net(v4size).reverseName())
@@ -88,18 +138,17 @@ class Pytter(object):
     # Private methods
     def __generate_zone_header(self):
         serialnumber = self.serialnumber
-        conf = self.config.copy()
-        headers = "$TTL {}\n".format(conf['default_ttl'])
+        headers = "$TTL {}\n".format(self._default_ttl)
         headers += "@ {:<5} {:<8} {:<8} {:<8} {:<8} (\n".format(
-                conf['soa_ttl'], "IN", "SOA",
-                conf['primary_server'], conf['email'])
+                self._soa_ttl, "IN", "SOA",
+                self._primary_server, self._email)
         headers += "{:>42} ; {}\n".format(serialnumber, "Serial number")
-        headers += "{:>42} ; {}\n".format(conf['refresh'], "Refresh")
-        headers += "{:>42} ; {}\n".format(conf['retry'], "Retry")
-        headers += "{:>42} ; {}\n".format(conf['expire'], "Expire")
+        headers += "{:>42} ; {}\n".format(self._refresh, "Refresh")
+        headers += "{:>42} ; {}\n".format(self._retry, "Retry")
+        headers += "{:>42} ; {}\n".format(self._expire, "Expire")
         headers += "{:>42} {}; {}\n".format(
-                conf['minimum_ttl'], ")", "Minimum TTL")
-        for ns in conf['nameservers']:
+                self._minimum_ttl, ")", "Minimum TTL")
+        for ns in self._nameservers:
             headers += "{:<2}{:<5} {:<8} {:<8} {:<8}\n".format(
                     "", "", "", "NS", ns)
 
