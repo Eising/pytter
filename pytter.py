@@ -120,6 +120,13 @@ class Pytter(object):
                 zone += self.__generate_record(ip, dtype, dvalue)
         return zone
 
+    def dump_zone_noheader(self, fqdn):
+        zone = ""
+        for ip, data in sorted(self.rdns[fqdn].iteritems(), key=lambda addr: IP(addr[0]).int()):
+            for dtype, dvalue in data.iteritems():
+                zone += self.__generate_record(ip, dtype, dvalue)
+        return zone
+
     def dump_zones(self, directory=None):
         if (directory is not None):
             for fqdn in self.rdns.iterkeys():
@@ -130,6 +137,18 @@ class Pytter(object):
         else:
             for fqdn in self.rdns.iterkeys():
                 print self.dump_zone(fqdn)
+
+
+    def generate_empty_zone(self, filename):
+        f = open(filename, "w")
+        zone = self.__generate_zone_header()
+        f.write(zone)
+        f.close()
+
+    def save_zones(self):
+        zones = {}
+        for fqdn in self.rdns.iterkeys():
+            zones[fqdn] = self.dump_zone_noheader(fqdn)
 
     # Private methods
     def __generate_zone_header(self):
