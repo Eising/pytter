@@ -112,6 +112,13 @@ $TTL 86400
 3.0.1.10.in-addr.arpa.               PTR     3.my.domain.name.
 ```
 
+# Empty zones
+If for some reason you need to create an empty zone, you can do this also:
+
+```
+pytter.generate_empty_zone(filename)
+```
+
 # Contact and disclaimer
 
 This library is not meant for serious work. If it's working for you, fine, but
